@@ -1,0 +1,8 @@
+.idea/
+
+demis_dev.yml
+demis_test.yml
+Jenkinsfile
+Jenkinsfile_Release
+Jenkinsfile_GitHubPublish
+README_internal.md

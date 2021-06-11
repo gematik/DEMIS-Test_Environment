@@ -1,0 +1,239 @@
+#
+#  Copyright (c) 2021 gematik GmbH
+#  
+#  Licensed under the EUPL, Version 1.2 or – as soon they will be approved by
+#  the European Commission - subsequent versions of the EUPL (the Licence);
+#  You may not use this work except in compliance with the Licence.
+#  You may obtain a copy of the Licence at:
+#  
+#      https://joinup.ec.europa.eu/software/page/eupl
+#  
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the Licence is distributed on an "AS IS" basis,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the Licence for the specific language governing permissions and
+#  limitations under the Licence.
+#  
+#
+
+###################################################
+# General Service Definition
+###################################################
+
+version: "3.9"
+
+###################################################
+# Definition of common settings across services
+###################################################
+
+# Common Service Properties
+x-service-setup: &service-setup-ref
+  restart: always
+
+# Common Volume Properties
+x-volume-config: &volume-setup-ref
+  volumes:
+    - demis-config-volume:/app/config:rw
+
+# Common Environment Configuration Properties
+x-env-config: &environment-config-ref
+  CONFIGURATION_PATH: /app/config
+
+# Common Environment Timezone Entry
+x-environment-timezone: &environment-timezone-ref
+  TZ: Europe/Berlin
+
+# Common Health Check Properties
+x-healthcheck-config: &healthcheck-ref
+  interval: 15s
+  timeout: 10s
+  retries: 20
+  start_period: 30s
+
+###################################################
+# Definition of services
+###################################################
+services:
+
+  # DEMIS Configuration Files - The image is terminated immediately, it serves as data container
+  demis-config-data:
+    image: gematik1/demis-configuration-test:1.0.0
+    restart: "no"
+    <<: *volume-setup-ref
+
+  keycloak:
+    image: gematik1/demis-keycloak:1.0.2-configured-test
+    <<: *service-setup-ref
+    <<: *volume-setup-ref
+    ports:
+      - "9081:8080"
+      - "9082:8443"
+    container_name: demis-keycloak
+    environment:
+      - TZ=Europe/Berlin
+      - PROXY_ADDRESS_FORWARDING=true
+      - ROOT_LOGLEVEL=INFO
+      - KEYCLOAK_LOGLEVEL=INFO
+    healthcheck:
+      test: [ "CMD-SHELL", "curl --fail http://localhost:8080/auth || exit 1" ]
+      interval: 10s
+      timeout: 3s
+      retries: 300
+    networks:
+      - demis-network
+
+  postgresDemis:
+    image: gematik1/demis-postgres:1.8.2
+    <<: *service-setup-ref
+    <<: *volume-setup-ref
+    container_name: demis-postgres
+    environment:
+      - TZ=Europe/Berlin
+      - POSTGRES_PASSWORD=demis
+    networks:
+      - demis-network
+    restart: always
+
+  nginx:
+    image: gematik1/demis-nginx:1.8.2
+    <<: *service-setup-ref
+    <<: *volume-setup-ref
+    ports:
+      - "7080:80"
+      - "7443:443"
+    container_name: demis-nginx
+    environment:
+      <<: *environment-timezone-ref
+    depends_on:
+      - notification-api
+      - pseudonymization-service
+      - postgresDemis
+      - keycloak
+    networks:
+      demis-network:
+        aliases:
+          - demis.gematik.de
+    restart: always
+
+  storage-service:
+    image: gematik1/demis-storage:1.8.2
+    <<: *service-setup-ref
+    <<: *volume-setup-ref
+    ports:
+      - "9181:8080"
+    container_name: demis-storage-service
+    environment:
+      <<: *environment-timezone-ref
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      postgresDemis:
+        condition: service_started
+    networks:
+      - demis-network
+    restart: always
+
+  doublette-detection-services:
+    image: gematik1/demis-doublette-detection:1.8.2
+    <<: *service-setup-ref
+    <<: *volume-setup-ref
+    ports:
+      - "9182:8080"
+    container_name: demis-doublette-detection-service
+    environment:
+      <<: *environment-timezone-ref
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      postgresDemis:
+        condition: service_started
+    networks:
+      - demis-network
+    restart: always
+
+
+  pseudonymization-service:
+    image: gematik1/demis-pseudonymization:1.8.2
+    <<: *service-setup-ref
+    <<: *volume-setup-ref
+    ports:
+      - "7771:7771"
+      - "7663:7663"
+      - "6380:6380"
+      - "7665:7665"
+    container_name: demis-pseudonymization-service
+    environment:
+      <<: *environment-timezone-ref
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      postgresDemis:
+        condition: service_started
+    networks:
+      - demis-network
+    restart: always
+
+  notification-clearing-api:
+    image: gematik1/demis-notification-clearing-api:1.8.2
+    <<: *service-setup-ref
+    <<: *volume-setup-ref
+    ports:
+      - "9070:8080"
+    container_name: demis-notification-clearing-api
+    environment:
+      <<: *environment-timezone-ref
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      postgresDemis:
+        condition: service_started
+    networks:
+      - demis-network
+    restart: always
+
+  notification-api:
+    image: gematik1/demis-notification-api:1.8.2
+    <<: *service-setup-ref
+    <<: *volume-setup-ref
+    ports:
+      - "9080:8080"
+    container_name: demis-webservices
+    environment:
+      <<: *environment-timezone-ref
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      postgresDemis:
+        condition: service_started
+    networks:
+      - demis-network
+    restart: always
+
+  pdf-generation-service:
+    image: gematik1/demis-pdf-generation:1.8.2
+    <<: *service-setup-ref
+    <<: *volume-setup-ref
+    ports:
+      - "9074:8080"
+    container_name: demis-pdf-generation-service
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      postgresDemis:
+        condition: service_started
+      demis-config-data:
+        condition: service_started
+    networks:
+      - demis-network
+    environment:
+      <<: *environment-config-ref
+      <<: *environment-timezone-ref
+
+# Network definition
+networks:
+  demis-network:
+    name: demis-network
+
+# Volume definition
+volumes:
+  demis-config-volume:
