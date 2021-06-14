@@ -65,9 +65,6 @@ services:
     image: gematik1/demis-keycloak:1.0.2-configured-test
     <<: *service-setup-ref
     <<: *volume-setup-ref
-    ports:
-      - "9081:8080"
-      - "9082:8443"
     container_name: demis-keycloak
     environment:
       - TZ=Europe/Berlin
@@ -119,8 +116,6 @@ services:
     image: gematik1/demis-storage:1.8.2
     <<: *service-setup-ref
     <<: *volume-setup-ref
-    ports:
-      - "9181:8080"
     container_name: demis-storage-service
     environment:
       <<: *environment-timezone-ref
@@ -137,8 +132,6 @@ services:
     image: gematik1/demis-doublette-detection:1.8.2
     <<: *service-setup-ref
     <<: *volume-setup-ref
-    ports:
-      - "9182:8080"
     container_name: demis-doublette-detection-service
     environment:
       <<: *environment-timezone-ref
@@ -156,11 +149,6 @@ services:
     image: gematik1/demis-pseudonymization:1.8.2
     <<: *service-setup-ref
     <<: *volume-setup-ref
-    ports:
-      - "7771:7771"
-      - "7663:7663"
-      - "6380:6380"
-      - "7665:7665"
     container_name: demis-pseudonymization-service
     environment:
       <<: *environment-timezone-ref
@@ -177,8 +165,6 @@ services:
     image: gematik1/demis-notification-clearing-api:1.8.2
     <<: *service-setup-ref
     <<: *volume-setup-ref
-    ports:
-      - "9070:8080"
     container_name: demis-notification-clearing-api
     environment:
       <<: *environment-timezone-ref
@@ -195,8 +181,6 @@ services:
     image: gematik1/demis-notification-api:1.8.2
     <<: *service-setup-ref
     <<: *volume-setup-ref
-    ports:
-      - "9080:8080"
     container_name: demis-webservices
     environment:
       <<: *environment-timezone-ref
@@ -213,8 +197,6 @@ services:
     image: gematik1/demis-pdf-generation:1.8.2
     <<: *service-setup-ref
     <<: *volume-setup-ref
-    ports:
-      - "9074:8080"
     container_name: demis-pdf-generation-service
     depends_on:
       keycloak:
