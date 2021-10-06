@@ -1,3 +1,8 @@
+# Release 1.1.0
+- add configurable Server Url and Port 
+- add processing of SARS-CoV-2, Influenca, Rotavirus (https://simplifier.net/demis)
+- add Postgres DB with test notifications
+
 # Release 1.0.1
 DEMIS Docker TEST Environment 1.0.1 (DEMIS 1.8.2)
 

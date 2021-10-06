@@ -57,7 +57,7 @@ services:
 
   # DEMIS Configuration Files - The image is terminated immediately, it serves as data container
   demis-config-data:
-    image: gematik1/demis-configuration-test:1.0.0
+    image: gematik1/demis-configuration-test:1.1.0
     restart: "no"
     <<: *volume-setup-ref
 
@@ -80,13 +80,14 @@ services:
       - demis-network
 
   postgresDemis:
-    image: gematik1/demis-postgres:1.8.2
+    image: gematik1/demis-postgres:1.8.2-configured-test
     <<: *service-setup-ref
     <<: *volume-setup-ref
     container_name: demis-postgres
     environment:
       - TZ=Europe/Berlin
       - POSTGRES_PASSWORD=demis
+      - PGDATA=demis_database
     networks:
       - demis-network
     restart: always
@@ -162,12 +163,13 @@ services:
     restart: always
 
   notification-clearing-api:
-    image: gematik1/demis-notification-clearing-api:1.8.2
+    image: gematik1/demis-notification-clearing-api:1.9.0
     <<: *service-setup-ref
     <<: *volume-setup-ref
     container_name: demis-notification-clearing-api
     environment:
-      <<: *environment-timezone-ref
+      - HAPI_OIDC_ISSUER=https://localhost:7443/auth/realms/OEGD
+      - HAPI_SERVER_ADDRESS=https://localhost:7443/notification-clearing-api/fhir/
     depends_on:
       keycloak:
         condition: service_healthy
@@ -178,12 +180,12 @@ services:
     restart: always
 
   notification-api:
-    image: gematik1/demis-notification-api:1.8.2
+    image: gematik1/demis-notification-api:1.9.0
     <<: *service-setup-ref
     <<: *volume-setup-ref
     container_name: demis-webservices
     environment:
-      <<: *environment-timezone-ref
+      - HAPI_OIDC_ISSUER=https://localhost:7443/auth/realms/LAB
     depends_on:
       keycloak:
         condition: service_healthy

@@ -1,7 +1,10 @@
 .idea/
 
 demis_dev.yml
+demis_localhost.yml
+demis_template.yml
 demis_test.yml
+deploy.Jenkinsfile
 Jenkinsfile
 Jenkinsfile_Release
 Jenkinsfile_GitHubPublish
