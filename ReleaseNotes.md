@@ -1,3 +1,8 @@
+# Release 1.2.0
+- add processing of profiles 1.16.0 (https://simplifier.net/packages/demis.fhir.profiles/1.16.0)
+
+Note: DEMIS Profile Package 1.16.0 is not backward compatible with the existing SARS-CoV-2 profile (https://simplifier.net/Covid-19Labormeldung). A fully backward compatible environment will be available soon. Therefore, this environment should only be used for testing with the new base profiles.
+
 # Release 1.1.0
 - add configurable Server Url and Port 
 - add processing of SARS-CoV-2, Influenca, Rotavirus (https://simplifier.net/demis)
