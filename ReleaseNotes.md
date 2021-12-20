@@ -1,3 +1,8 @@
+# Release 1.3.0
+Release 1.3.0
+- adds processing of DEMIS Profile Package 1.21.0 (https://simplifier.net/packages/rki.demis.r4.core/1.21.0)
+- enables backward compatibility for existing SARS-CoV-2 profile (https://simplifier.net/Covid-19Labormeldung)
+
 # Release 1.2.0
 - add processing of profiles 1.16.0 (https://simplifier.net/packages/demis.fhir.profiles/1.16.0)
 
