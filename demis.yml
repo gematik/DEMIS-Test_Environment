@@ -57,7 +57,7 @@ services:
 
   # DEMIS Configuration Files - The image is terminated immediately, it serves as data container
   demis-config-data:
-    image: gematik1/demis-configuration-test:1.4.1
+    image: gematik1/demis-configuration-test:1.4.4
     restart: "no"
     <<: *volume-setup-ref
 
@@ -115,7 +115,7 @@ services:
     restart: always
 
   storage-service:
-    image: gematik1/demis-storage:1.8.2
+    image: gematik1/demis-storage:1.8.5
     <<: *service-setup-ref
     <<: *volume-setup-ref
     container_name: demis-storage-service
@@ -131,7 +131,7 @@ services:
     restart: always
 
   doublette-detection-services:
-    image: gematik1/demis-doublette-detection:1.8.2
+    image: gematik1/demis-doublette-detection:1.9.1
     <<: *service-setup-ref
     <<: *volume-setup-ref
     container_name: demis-doublette-detection-service
@@ -148,7 +148,7 @@ services:
 
 
   pseudonymization-service:
-    image: gematik1/demis-pseudonymization:1.8.2
+    image: gematik1/demis-pseudonymization:1.8.6
     <<: *service-setup-ref
     <<: *volume-setup-ref
     container_name: demis-pseudonymization-service
@@ -164,7 +164,7 @@ services:
     restart: always
 
   notification-clearing-api:
-    image: gematik1/demis-notification-clearing-api:1.9.1
+    image: gematik1/demis-notification-clearing-api:1.9.2
     <<: *service-setup-ref
     <<: *volume-setup-ref
     container_name: demis-notification-clearing-api
@@ -181,7 +181,7 @@ services:
     restart: always
 
   notification-api:
-    image: gematik1/demis-notification-api:1.9.1
+    image: gematik1/demis-notification-api:1.9.3
     <<: *service-setup-ref
     <<: *volume-setup-ref
     container_name: demis-webservices
@@ -197,7 +197,7 @@ services:
     restart: always
 
   pdf-generation-service:
-    image: gematik1/demis-pdf-generation:1.8.2
+    image: gematik1/demis-pdf-generation:1.8.5
     <<: *service-setup-ref
     <<: *volume-setup-ref
     container_name: demis-pdf-generation-service
