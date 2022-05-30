@@ -1,5 +1,5 @@
 #
-#  Copyright (c) 2021 gematik GmbH
+#  Copyright (c) 2022 gematik GmbH
 #  
 #  Licensed under the EUPL, Version 1.2 or – as soon they will be approved by
 #  the European Commission - subsequent versions of the EUPL (the Licence);
@@ -56,22 +56,30 @@ x-healthcheck-config: &healthcheck-ref
 services:
 
   # DEMIS Configuration Files - The image is terminated immediately, it serves as data container
+
   demis-config-data:
-    image: gematik1/demis-configuration-test:1.4.4
+    image: gematik1/demis-configuration-test:1.5.0
     restart: "no"
     <<: *volume-setup-ref
 
   keycloak:
-    image: gematik1/demis-keycloak:1.0.2-configured-test
+    image: gematik1/demis-keycloak:2.0.0
     <<: *service-setup-ref
     <<: *volume-setup-ref
+    ports:
+      - "9081:8080"
     container_name: demis-keycloak
     environment:
-      - TZ=Europe/Berlin
-      - PROXY_ADDRESS_FORWARDING=true
-      - ROOT_LOGLEVEL=INFO
-      - KEYCLOAK_LOGLEVEL=INFO
-      - DB_VENDOR=h2
+      TZ: Europe/Berlin
+      LANG: de_DE.UTF-8
+      CERT_HOST: localhost
+      PROXY_ADDRESS_FORWARDING: 'true'
+      DB_VENDOR: POSTGRES
+      DB_ADDR: demis-postgres
+      DB_DATABASE: keycloak
+      DB_USER: keycloak
+      DB_PASSWORD: F9A4nUr4bcyEtjFEdHjW
+      reschedule: on-node-failure
     healthcheck:
       test: [ "CMD-SHELL", "curl --fail http://localhost:8080/auth || exit 1" ]
       interval: 10s
@@ -81,7 +89,7 @@ services:
       - demis-network
 
   postgresDemis:
-    image: gematik1/demis-postgres:1.8.2-configured-test
+    image: gematik1/demis-postgres:1.8.3
     <<: *service-setup-ref
     <<: *volume-setup-ref
     container_name: demis-postgres
@@ -104,7 +112,7 @@ services:
     environment:
       <<: *environment-timezone-ref
     depends_on:
-      - notification-api
+      - notification-entry-service
       - pseudonymization-service
       - postgresDemis
       - keycloak
@@ -115,7 +123,7 @@ services:
     restart: always
 
   storage-service:
-    image: gematik1/demis-storage:1.8.5
+    image: gematik1/demis-storage:1.8.6
     <<: *service-setup-ref
     <<: *volume-setup-ref
     container_name: demis-storage-service
@@ -131,7 +139,7 @@ services:
     restart: always
 
   doublette-detection-services:
-    image: gematik1/demis-doublette-detection:1.9.1
+    image: gematik1/demis-doublette-detection:1.9.2
     <<: *service-setup-ref
     <<: *volume-setup-ref
     container_name: demis-doublette-detection-service
@@ -148,7 +156,7 @@ services:
 
 
   pseudonymization-service:
-    image: gematik1/demis-pseudonymization:1.8.6
+    image: gematik1/demis-pseudonymization:1.8.7
     <<: *service-setup-ref
     <<: *volume-setup-ref
     container_name: demis-pseudonymization-service
@@ -164,7 +172,7 @@ services:
     restart: always
 
   notification-clearing-api:
-    image: gematik1/demis-notification-clearing-api:1.9.2
+    image: gematik1/demis-notification-clearing-api:1.12.3
     <<: *service-setup-ref
     <<: *volume-setup-ref
     container_name: demis-notification-clearing-api
@@ -180,13 +188,13 @@ services:
       - demis-network
     restart: always
 
-  notification-api:
-    image: gematik1/demis-notification-api:1.9.3
+  notification-entry-service:
+    image: gematik1/demis-notification-entry-service:1.0.4
     <<: *service-setup-ref
     <<: *volume-setup-ref
-    container_name: demis-webservices
+    container_name: demis-notification-entry-service
     environment:
-      - HAPI_OIDC_ISSUER=https://localhost:7443/auth/realms/LAB
+      - HAPI_OIDC_ISSUER=https://localhost:7443/auth/realms/LAB,https://localhost:7443/auth/realms/HOSPITAL
     depends_on:
       keycloak:
         condition: service_healthy
@@ -197,7 +205,7 @@ services:
     restart: always
 
   pdf-generation-service:
-    image: gematik1/demis-pdf-generation:1.8.5
+    image: gematik1/demis-pdf-generation:1.9.3
     <<: *service-setup-ref
     <<: *volume-setup-ref
     container_name: demis-pdf-generation-service

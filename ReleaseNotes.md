@@ -1,3 +1,7 @@
+# Release 1.4.0
+- add KIS interface (hospitalization)
+- add Profile Package rki.demis.r4.core 1.22.0
+
 # Release 1.3.1
 update demis.yml to latest image versions
 
