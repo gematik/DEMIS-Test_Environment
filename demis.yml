@@ -58,7 +58,7 @@ services:
   # DEMIS Configuration Files - The image is terminated immediately, it serves as data container
 
   demis-config-data:
-    image: gematik1/demis-configuration-test:1.5.0
+    image: gematik1/demis-configuration-test:1.6.4
     restart: "no"
     <<: *volume-setup-ref
 
@@ -99,7 +99,6 @@ services:
       - PGDATA=demis_database
     networks:
       - demis-network
-    restart: always
 
   nginx:
     image: gematik1/demis-nginx:1.8.2
@@ -120,7 +119,6 @@ services:
       demis-network:
         aliases:
           - demis.gematik.de
-    restart: always
 
   storage-service:
     image: gematik1/demis-storage:1.8.6
@@ -136,7 +134,6 @@ services:
         condition: service_started
     networks:
       - demis-network
-    restart: always
 
   doublette-detection-services:
     image: gematik1/demis-doublette-detection:1.9.2
@@ -152,8 +149,6 @@ services:
         condition: service_started
     networks:
       - demis-network
-    restart: always
-
 
   pseudonymization-service:
     image: gematik1/demis-pseudonymization:1.8.7
@@ -169,10 +164,9 @@ services:
         condition: service_started
     networks:
       - demis-network
-    restart: always
 
   notification-clearing-api:
-    image: gematik1/demis-notification-clearing-api:1.12.3
+    image: gematik1/demis-notification-clearing-api:1.13.0
     <<: *service-setup-ref
     <<: *volume-setup-ref
     container_name: demis-notification-clearing-api
@@ -186,10 +180,9 @@ services:
         condition: service_started
     networks:
       - demis-network
-    restart: always
 
   notification-entry-service:
-    image: gematik1/demis-notification-entry-service:1.0.4
+    image: gematik1/demis-notification-entry-service:1.0.7
     <<: *service-setup-ref
     <<: *volume-setup-ref
     container_name: demis-notification-entry-service
@@ -202,10 +195,9 @@ services:
         condition: service_started
     networks:
       - demis-network
-    restart: always
 
   pdf-generation-service:
-    image: gematik1/demis-pdf-generation:1.9.3
+    image: gematik1/demis-pdf-generation:1.10.0
     <<: *service-setup-ref
     <<: *volume-setup-ref
     container_name: demis-pdf-generation-service
@@ -221,6 +213,64 @@ services:
     environment:
       <<: *environment-config-ref
       <<: *environment-timezone-ref
+
+  validation-service:
+    image: gematik1/demis-validation-service:1.0.0
+    <<: *service-setup-ref
+    ports:
+      - "8092:8092"
+    container_name: demis-validation-service
+    environment:
+      TZ: Europe/Berlin
+      SERVER_PORT: 8092
+    networks:
+      - demis-network
+
+  hospital-location-service:
+    image: gematik1/demis-hospital-location-service:1.0.0
+    <<: *service-setup-ref
+    ports:
+      - "8091:8091"
+    container_name: demis-hospital-location-service
+    environment:
+      TZ: Europe/Berlin
+      SERVER_PORT: 8091
+    networks:
+      - demis-network
+
+  report-processing-service:
+    image: gematik1/demis-report-processing-service:1.0.0
+    <<: *service-setup-ref
+    ports:
+      - "8090:8090"
+    container_name: demis-report-processing-service
+    environment:
+      TZ: Europe/Berlin
+      SERVER_PORT: 8090
+      DEMIS_IDP_CLIENT_ID: notification-entry-service
+      DEMIS_IDP_ALLOWED_ROLES: disease-notification-sender
+      DEMIS_IDP_PUBLIC_KEY_LOCATION: http://demis-keycloak:8080/auth/realms/HOSPITAL/protocol/openid-connect/certs
+      DEMIS_NETWORK_VALIDATION_SERVICE_ADDRESS: http://demis-validation-service:8092
+      DEMIS_NETWORK_NOTIFICATION_CLEARING_API_ADDRESS: http://demis-notification-clearing-api:8080/notification-clearing-api/fhir
+      DEMIS_NETWORK_HOSPITAL_LOCATION_SERVICE_ADDRESS: http://demis-hospital-location-service:8091
+      DEMIS_NETWORK_PDFGEN_SERVICE_ADDRESS: http://demis-pdfgen-service:8093
+      HLS_VALIDATION_GATEWAY_VALUE: demis-gateway
+      HLS_VALIDATION_GATEWAY_KEY: azp
+      NCS_APIKEY: aad3f9f00390689324a7f49c4e908fcf981dfa0563b857196e7ececf5f1eb0ea
+    networks:
+      - demis-network
+
+  pdfgen-service:
+    image: gematik1/demis-pdfgen-service:1.0.0
+    <<: *service-setup-ref
+    ports:
+      - "8093:8093"
+    container_name: demis-pdfgen-service
+    environment:
+      TZ: Europe/Berlin
+      SERVER_PORT: 8093
+    networks:
+      - demis-network
 
 # Network definition
 networks:

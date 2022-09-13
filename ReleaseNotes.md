@@ -1,3 +1,43 @@
+<img align="right" width="200" height="37" src="image/Gematik_Logo_Flag.png"/> <br/>
+
+# Release notes DEMIS-Testumgebung
+
+## Release 1.5.0 (2022-09-13)
+
+Activation of the FHIR interface for reporting the daily hospitalization incidence (bed occupancy)
+
+### added
+
+- added validation-service
+  - This service deals with validation of notification or report messages sent to DEMIS system. Validation is done based on DEMIS FHIR profiles. Currently only bed occupancy profiles are supported.
+- added hospital-location-service
+  - This service provides information for hospital location data. For any valid IK-Number it provides a list of adresses of allowed/registered/known hospital-locations based on InEK-data.
+- added report-processing-service
+  - This service serves as a central processing point for report notifications to the DEMIS system. As a central interface, other services such as the validation service are addressed, the results are bundled and transferred to the NCAPI. 
+- added pdfgen-service
+  - Service generating pdf documents from a thymeleaf template for a notification receipt for bed occupancy reports.
+ 
+
+### fixed 
+
+- change pdf-generation Service
+  - fixed the additional information on the exposure location is missing in the pdf receipt
+  - quality enhancement
+- change notification-entry-service
+  - fixed V1 messages generate " generic internal server error"
+  - quality enhancement
+- change notification-clearing-api
+  - quality enhancement 
+
+### security
+
+- change pdf-generation-service
+  - quality enhancement
+- change notification-entry-service
+  - quality enhancement
+- change notification-clearing-api
+  - quality enhancement
+
 # Release 1.4.0
 - add KIS interface (hospitalization)
 - add Profile Package rki.demis.r4.core 1.22.0
