@@ -2,6 +2,12 @@
 
 # Release notes DEMIS-Testumgebung
 
+## Release 1.5.1 (2022-09-15)
+
+### fixed
+- truncated zip code with leading "0"
+
+
 ## Release 1.5.0 (2022-09-13)
 
 Activation of the FHIR interface for reporting the daily hospitalization incidence (bed occupancy)

@@ -227,7 +227,7 @@ services:
       - demis-network
 
   hospital-location-service:
-    image: gematik1/demis-hospital-location-service:1.0.0
+    image: gematik1/demis-hospital-location-service:1.0.1
     <<: *service-setup-ref
     ports:
       - "8091:8091"
