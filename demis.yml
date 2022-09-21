@@ -227,7 +227,7 @@ services:
       - demis-network
 
   hospital-location-service:
-    image: gematik1/demis-hospital-location-service:1.0.1
+    image: gematik1/demis-hospital-location-service:1.0.2
     <<: *service-setup-ref
     ports:
       - "8091:8091"
@@ -261,7 +261,7 @@ services:
       - demis-network
 
   pdfgen-service:
-    image: gematik1/demis-pdfgen-service:1.0.0
+    image: gematik1/demis-pdfgen-service:1.0.1
     <<: *service-setup-ref
     ports:
       - "8093:8093"

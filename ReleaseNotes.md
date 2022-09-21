@@ -2,6 +2,13 @@
 
 # Release notes DEMIS-Testumgebung
 
+## Release 1.5.2 (2022-09-21)
+
+### fixed
+- country code for germany was removed from pdf receipt
+- database update with InEK data 
+
+
 ## Release 1.5.1 (2022-09-15)
 
 ### fixed
