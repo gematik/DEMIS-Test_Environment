@@ -2,12 +2,13 @@
 
 demis_DEMINT7.yml
 demis_DEMPROD7.yml
+demis_DEMTEST.yml
 demis_dev.yml
 demis_k4t.yml
 demis_localhost.yml
 demis_template.yml
-demis_template_devtir.yml
-demis_test.yml
+demis_devtir.yml
+demis.override.yml
 deploy.DEVTIR.Jenkinsfile
 deploy.Jenkinsfile
 deplyoy.k4t.Jenkinsfile

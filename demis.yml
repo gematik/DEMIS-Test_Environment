@@ -1,5 +1,5 @@
 #
-#  Copyright (c) 2022 gematik GmbH
+#  Copyright (c) 2023 gematik GmbH
 #  
 #  Licensed under the EUPL, Version 1.2 or – as soon they will be approved by
 #  the European Commission - subsequent versions of the EUPL (the Licence);
@@ -58,189 +58,249 @@ services:
   # DEMIS Configuration Files - The image is terminated immediately, it serves as data container
 
   demis-config-data:
-    image: gematik1/demis-configuration-test:1.6.4
+    image: gematik1/demis-configuration-test:1.7.2
     restart: "no"
     <<: *volume-setup-ref
+    networks:
+      demis-network:
 
   keycloak:
-    image: gematik1/demis-keycloak:2.0.0
-    <<: *service-setup-ref
+    image: gematik1/demis-keycloak:3.3.0
     <<: *volume-setup-ref
     ports:
       - "9081:8080"
+      - "9082:8443"
     container_name: demis-keycloak
     environment:
+      KC_DB_PASSWORD: F9A4nUr4bcyEtjFEdHjW
+      KC_DB_URL: jdbc:postgresql://demis-postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_HEALTH_ENABLED: true
+      KC_HTTP_ENABLED: true
+      KC_HOSTNAME_ADMIN_URL: https://localhost:7443/auth/
+      KC_HOSTNAME_URL: https://localhost:7443/auth/
+      KC_HOSTNAME_STRICT_BACKCHANNEL: true
+      KC_HOSTNAME_STRICT_HTTPS: true
+      KC_HOSTNAME_STRICT: true
+      KC_HTTPS_CLIENT_AUTH: request
+      KC_HTTPS_KEY_STORE_FILE: /app/config/keycloak/truststore/keystore.p12
+      KC_HTTPS_KEY_STORE_PASSWORD: password
+      KC_SPI_TRUSTSTORE_FILE_FILE: /app/config/keycloak/truststore/truststore.jks
+      KC_SPI_TRUSTSTORE_FILE_PASSWORD: password
+      KC_SPI_TRUSTSTORE_FILE_HOSTNAME_VERIFICATION_POLICY: ANY
+      KC_SPI_X509CERT_LOOKUP_PROVIDER: nginx
+      KC_SPI_X509CERT_LOOKUP_NGINX_SSL_CLIENT_CERT: ssl-client-cert
       TZ: Europe/Berlin
-      LANG: de_DE.UTF-8
-      CERT_HOST: localhost
-      PROXY_ADDRESS_FORWARDING: 'true'
-      DB_VENDOR: POSTGRES
-      DB_ADDR: demis-postgres
-      DB_DATABASE: keycloak
-      DB_USER: keycloak
-      DB_PASSWORD: F9A4nUr4bcyEtjFEdHjW
-      reschedule: on-node-failure
+      KC_LANG: de_DE.UTF-8
+      KC_LOCALE: de
+      JAVA_OPTS_APPEND: '-Xms512m -Xmx1024m'
+      KC_LOG: console
+      KC_LOG_LEVEL: info,org.keycloak.services.x509:debug
+      KC_LOG_CONSOLE_COLOR: true
+      CERT_HOSTNAME: localhost
+      KC_PROXY: edge
+    depends_on:
+      keycloak-importer:
+        condition: service_completed_successfully
     healthcheck:
-      test: [ "CMD-SHELL", "curl --fail http://localhost:8080/auth || exit 1" ]
-      interval: 10s
-      timeout: 3s
-      retries: 300
+      <<: *healthcheck-ref
+      test: [ "CMD-SHELL", "curl --fail http://localhost:8080/health || exit 1" ]
     networks:
-      - demis-network
+      demis-network:
 
-  postgresDemis:
+  keycloak-importer:
+    image: gematik1/demis-keycloak:3.3.0
+    entrypoint: [ "/docker-entrypoint.d/kc-import-data.sh" ]
+    <<: *volume-setup-ref
+    container_name: keycloak-importer
+    environment:
+      KC_DB_PASSWORD: F9A4nUr4bcyEtjFEdHjW
+      KC_DB_URL: jdbc:postgresql://demis-postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_HOSTNAME: keycloak
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+      IMPORT_DIR: /app/config/keycloak/initial-import
+      reschedule: on-node-failure
+    depends_on:
+      demis-postgres:
+        condition: service_healthy
+    restart: 'no'
+    networks:
+      demis-network:
+
+  demis-postgres:
     image: gematik1/demis-postgres:1.8.3
-    <<: *service-setup-ref
     <<: *volume-setup-ref
     container_name: demis-postgres
     environment:
       - TZ=Europe/Berlin
       - POSTGRES_PASSWORD=demis
-      - PGDATA=demis_database
+    depends_on:
+      demis-config-data:
+        condition: service_completed_successfully
+    healthcheck:
+      <<: *healthcheck-ref
+      test: [ "CMD-SHELL", "pg_isready" ]
+    restart: 'no'
     networks:
-      - demis-network
+      demis-network:
 
   nginx:
-    image: gematik1/demis-nginx:1.8.2
+    image: gematik1/demis-nginx:1.8.5
     <<: *service-setup-ref
     <<: *volume-setup-ref
     ports:
-      - "7080:80"
       - "7443:443"
     container_name: demis-nginx
     environment:
       <<: *environment-timezone-ref
-    depends_on:
-      - notification-entry-service
-      - pseudonymization-service
-      - postgresDemis
-      - keycloak
-    networks:
-      demis-network:
-        aliases:
-          - demis.gematik.de
-
-  storage-service:
-    image: gematik1/demis-storage:1.8.6
-    <<: *service-setup-ref
-    <<: *volume-setup-ref
-    container_name: demis-storage-service
-    environment:
-      <<: *environment-timezone-ref
+    healthcheck:
+      <<: *healthcheck-ref
+      test: [ "CMD-SHELL", "curl --fail http://localhost:80 || exit 1" ]
     depends_on:
       keycloak:
         condition: service_healthy
-      postgresDemis:
-        condition: service_started
     networks:
-      - demis-network
+      demis-fe-network:
+      demis-network:
+        aliases:
+          - demis.ddtu.de
+
+  storage-service:
+    image: gematik1/demis-storage:1.8.6
+    <<: *volume-setup-ref
+    ports:
+      - "9181:7771"
+    container_name: demis-storage-service
+    environment:
+      <<: *environment-timezone-ref
+    restart: 'no'
+    depends_on:
+      demis-config-data:
+        condition: service_completed_successfully
+    networks:
+      demis-network:
 
   doublette-detection-services:
-    image: gematik1/demis-doublette-detection:1.9.2
-    <<: *service-setup-ref
+    image: gematik1/demis-doublette-detection:1.10.0
     <<: *volume-setup-ref
+    ports:
+      - "9182:7665"
     container_name: demis-doublette-detection-service
     environment:
       <<: *environment-timezone-ref
     depends_on:
       keycloak:
         condition: service_healthy
-      postgresDemis:
-        condition: service_started
+      demis-config-data:
+        condition: service_completed_successfully
     networks:
-      - demis-network
+      demis-network:
 
   pseudonymization-service:
     image: gematik1/demis-pseudonymization:1.8.7
-    <<: *service-setup-ref
     <<: *volume-setup-ref
     container_name: demis-pseudonymization-service
     environment:
       <<: *environment-timezone-ref
     depends_on:
-      keycloak:
-        condition: service_healthy
-      postgresDemis:
-        condition: service_started
+      demis-config-data:
+        condition: service_completed_successfully
     networks:
-      - demis-network
-
-  notification-clearing-api:
-    image: gematik1/demis-notification-clearing-api:1.13.0
-    <<: *service-setup-ref
-    <<: *volume-setup-ref
-    container_name: demis-notification-clearing-api
-    environment:
-      - HAPI_OIDC_ISSUER=https://localhost:7443/auth/realms/OEGD
-      - HAPI_SERVER_ADDRESS=https://localhost:7443/notification-clearing-api/fhir/
-    depends_on:
-      keycloak:
-        condition: service_healthy
-      postgresDemis:
-        condition: service_started
-    networks:
-      - demis-network
-
-  notification-entry-service:
-    image: gematik1/demis-notification-entry-service:1.0.7
-    <<: *service-setup-ref
-    <<: *volume-setup-ref
-    container_name: demis-notification-entry-service
-    environment:
-      - HAPI_OIDC_ISSUER=https://localhost:7443/auth/realms/LAB,https://localhost:7443/auth/realms/HOSPITAL
-    depends_on:
-      keycloak:
-        condition: service_healthy
-      postgresDemis:
-        condition: service_started
-    networks:
-      - demis-network
+      demis-network:
 
   pdf-generation-service:
-    image: gematik1/demis-pdf-generation:1.10.0
+    image: gematik1/demis-pdf-generation:1.11.0
     <<: *service-setup-ref
     <<: *volume-setup-ref
+    ports:
+      - "9074:8080"
     container_name: demis-pdf-generation-service
-    depends_on:
-      keycloak:
-        condition: service_healthy
-      postgresDemis:
-        condition: service_started
-      demis-config-data:
-        condition: service_started
+    restart: 'no'
     networks:
-      - demis-network
+      demis-network:
+    depends_on:
+      demis-config-data:
+        condition: service_completed_successfully
     environment:
       <<: *environment-config-ref
       <<: *environment-timezone-ref
 
-  validation-service:
-    image: gematik1/demis-validation-service:1.0.0
-    <<: *service-setup-ref
+  notification-clearing-api:
+    image: gematik1/demis-notification-clearing-api:1.16.0
+    <<: *volume-setup-ref
     ports:
-      - "8092:8092"
+      - "9070:8080"
+    container_name: demis-notification-clearing-api
+    environment:
+      <<: *environment-timezone-ref
+      HAPI_OIDC_ISSUER : https://localhost:7443/auth/realms/OEGD
+      HAPI_SERVER_ADDRESS : https://localhost:7443/notification-clearing-api/fhir/
+    depends_on:
+      demis-postgres:
+        condition: service_started
+      demis-config-data:
+        condition: service_completed_successfully
+    networks:
+      demis-network:
+
+  notification-entry-service:
+    image: gematik1/demis-notification-entry-service:1.1.3
+    <<: *volume-setup-ref
+    ports:
+      - "9080:8080"
+    container_name: demis-notification-entry-service
+    environment:
+      <<: *environment-timezone-ref
+      HAPI_OIDC_ISSUER : https://localhost:7443/auth/realms/LAB,https://localhost:7443/auth/realms/HOSPITAL
+      HAPI_SERVER_ADDRESS : https://localhost:7443/notification-entry-service/fhir/
+    depends_on:
+      pseudonymization-service:
+        condition: service_started
+      pdf-generation-service:
+        condition: service_started
+      storage-service:
+        condition: service_started
+      demis-config-data:
+        condition: service_completed_successfully
+    restart: 'no'
+    networks:
+      demis-network:
+
+  validation-service:
+    image: gematik1/demis-validation-service:1.2.0
+    ports:
+      - "8092:8080"
     container_name: demis-validation-service
     environment:
       TZ: Europe/Berlin
-      SERVER_PORT: 8092
+      SERVER_PORT: 8080
+    restart: 'no'
+    healthcheck:
+      <<: *healthcheck-ref
+      test: [ "CMD-SHELL", "curl --fail http://localhost:8080/actuator/health || exit 1" ]
     networks:
-      - demis-network
+      demis-network:
 
   hospital-location-service:
-    image: gematik1/demis-hospital-location-service:1.0.2
+    image: gematik1/demis-hospital-location-service:1.0.7
     <<: *service-setup-ref
     ports:
-      - "8091:8091"
+      - "8091:8080"
     container_name: demis-hospital-location-service
     environment:
       TZ: Europe/Berlin
-      SERVER_PORT: 8091
+      SERVER_PORT: 8080
+    restart: 'no'
+    healthcheck:
+      <<: *healthcheck-ref
+      test: [ "CMD-SHELL", "curl --fail http://localhost:8080/actuator/health || exit 1" ]
     networks:
-      - demis-network
+      demis-network:
 
   report-processing-service:
-    image: gematik1/demis-report-processing-service:1.0.0
-    <<: *service-setup-ref
+    image: gematik1/demis-report-processing-service:1.2.0
     ports:
       - "8090:8090"
     container_name: demis-report-processing-service
@@ -249,33 +309,43 @@ services:
       SERVER_PORT: 8090
       DEMIS_IDP_CLIENT_ID: notification-entry-service
       DEMIS_IDP_ALLOWED_ROLES: disease-notification-sender
-      DEMIS_IDP_PUBLIC_KEY_LOCATION: http://demis-keycloak:8080/auth/realms/HOSPITAL/protocol/openid-connect/certs
-      DEMIS_NETWORK_VALIDATION_SERVICE_ADDRESS: http://demis-validation-service:8092
+      DEMIS_IDP_PUBLIC_KEY_LOCATION: http://demis-keycloak:8080/realms/HOSPITAL/protocol/openid-connect/certs
+      DEMIS_NETWORK_VALIDATION_SERVICE_ADDRESS: http://demis-validation-service:8080
       DEMIS_NETWORK_NOTIFICATION_CLEARING_API_ADDRESS: http://demis-notification-clearing-api:8080/notification-clearing-api/fhir
-      DEMIS_NETWORK_HOSPITAL_LOCATION_SERVICE_ADDRESS: http://demis-hospital-location-service:8091
-      DEMIS_NETWORK_PDFGEN_SERVICE_ADDRESS: http://demis-pdfgen-service:8093
+      DEMIS_NETWORK_HOSPITAL_LOCATION_SERVICE_ADDRESS: http://demis-hospital-location-service:8080
+      DEMIS_NETWORK_PDFGEN_SERVICE_ADDRESS: http://demis-pdfgen-service:8080
       HLS_VALIDATION_GATEWAY_VALUE: demis-gateway
       HLS_VALIDATION_GATEWAY_KEY: azp
       NCS_APIKEY: aad3f9f00390689324a7f49c4e908fcf981dfa0563b857196e7ececf5f1eb0ea
+    restart: 'no'
+    healthcheck:
+      <<: *healthcheck-ref
+      test: [ "CMD-SHELL", "curl --fail http://localhost:8090/actuator/health || exit 1" ]
     networks:
-      - demis-network
+      demis-network:
 
   pdfgen-service:
-    image: gematik1/demis-pdfgen-service:1.0.1
-    <<: *service-setup-ref
+    image: gematik1/demis-pdfgen-service:1.0.2
     ports:
-      - "8093:8093"
+      - "8093:8080"
     container_name: demis-pdfgen-service
     environment:
       TZ: Europe/Berlin
-      SERVER_PORT: 8093
+      SERVER_PORT: 8080
+    restart: 'no'
+    healthcheck:
+      <<: *healthcheck-ref
+      test: [ "CMD-SHELL", "curl --fail http://localhost:8080/actuator/health || exit 1" ]
     networks:
-      - demis-network
+      demis-network:
+
 
 # Network definition
 networks:
   demis-network:
     name: demis-network
+  demis-fe-network:
+    name : demis-fe-network
 
 # Volume definition
 volumes:
