@@ -8,12 +8,15 @@ demis_k4t.yml
 demis_localhost.yml
 demis_template.yml
 demis_devtir.yml
+demis_dev_ltu.yml
 demis.override.yml
 deploy.DEVTIR.Jenkinsfile
 deploy.Jenkinsfile
 deplyoy.k4t.Jenkinsfile
+deploy.docker.Jenkinsfile
 Jenkinsfile
 Jenkinsfile_GitHubPublish
 Jenkinsfile_Release
 README_internal.md
 environments/
+

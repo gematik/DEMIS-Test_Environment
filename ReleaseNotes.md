@@ -1,6 +1,24 @@
 <img align="right" width="200" height="37" src="image/Gematik_Logo_Flag.png"/> <br/>
 
 # Release notes DEMIS-Testumgebung
+### Release 2.0.0 (2023-02-13)
+
+### fixed/update
+- hospital-location-service
+  - bugfix
+  - InEK got updated
+- report-processing-service
+  - bugfix
+
+### security
+- change notification-clearing-api
+  - quality enhancement
+- change pdfgen-service
+  - quality enhancement
+- change postgresql
+  - quality enhancement
+- change report-processing-service
+  - quality enhancement
 
 ## Release 1.5.2 (2022-09-21)
 
