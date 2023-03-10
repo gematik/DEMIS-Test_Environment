@@ -1,6 +1,19 @@
 <img align="right" width="200" height="37" src="image/Gematik_Logo_Flag.png"/> <br/>
 
 # Release notes DEMIS-Testumgebung
+
+### Release 2.0.1 (2023-03-10)
+- demis-configuration
+  - update
+- Hospital-Location-Service
+  - quality enhancement
+- Report-Processing-Service
+  - quality enhancement
+- Validation-Service
+  - quality enhancement
+- PDFgen-Service
+  - quality enhancement
+
 ### Release 2.0.0 (2023-02-13)
 
 ### fixed/update
@@ -24,7 +37,7 @@
 
 ### fixed
 - country code for germany was removed from pdf receipt
-- database update with InEK data 
+- database update with InEK data
 
 
 ## Release 1.5.1 (2022-09-15)
@@ -44,12 +57,12 @@ Activation of the FHIR interface for reporting the daily hospitalization inciden
 - added hospital-location-service
   - This service provides information for hospital location data. For any valid IK-Number it provides a list of adresses of allowed/registered/known hospital-locations based on InEK-data.
 - added report-processing-service
-  - This service serves as a central processing point for report notifications to the DEMIS system. As a central interface, other services such as the validation service are addressed, the results are bundled and transferred to the NCAPI. 
+  - This service serves as a central processing point for report notifications to the DEMIS system. As a central interface, other services such as the validation service are addressed, the results are bundled and transferred to the NCAPI.
 - added pdfgen-service
   - Service generating pdf documents from a thymeleaf template for a notification receipt for bed occupancy reports.
- 
 
-### fixed 
+
+### fixed
 
 - change pdf-generation Service
   - fixed the additional information on the exposure location is missing in the pdf receipt
@@ -58,7 +71,7 @@ Activation of the FHIR interface for reporting the daily hospitalization inciden
   - fixed V1 messages generate " generic internal server error"
   - quality enhancement
 - change notification-clearing-api
-  - quality enhancement 
+  - quality enhancement
 
 ### security
 
@@ -86,7 +99,7 @@ update demis.yml to latest image versions
 Note: DEMIS Profile Package 1.16.0 is not backward compatible with the existing SARS-CoV-2 profile (https://simplifier.net/Covid-19Labormeldung). A fully backward compatible environment will be available soon. Therefore, this environment should only be used for testing with the new base profiles.
 
 # Release 1.1.0
-- add configurable Server Url and Port 
+- add configurable Server Url and Port
 - add processing of SARS-CoV-2, Influenca, Rotavirus (https://simplifier.net/demis)
 - add Postgres DB with test notifications
 
