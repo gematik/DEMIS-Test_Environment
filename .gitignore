@@ -19,4 +19,4 @@ Jenkinsfile_GitHubPublish
 Jenkinsfile_Release
 README_internal.md
 environments/
-
+deployment_scripts_arvato/

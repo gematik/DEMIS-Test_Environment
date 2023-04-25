@@ -35,6 +35,11 @@ x-volume-config: &volume-setup-ref
   volumes:
     - demis-config-volume:/app/config:rw
 
+# Profile Snapshot Files
+x-volume-profile-snapshots: &volume-profiles-ref
+  volumes:
+    - demis-profiles-volume:/app/data/profiles:ro
+
 # Common Environment Configuration Properties
 x-env-config: &environment-config-ref
   CONFIGURATION_PATH: /app/config
@@ -56,16 +61,21 @@ x-healthcheck-config: &healthcheck-ref
 services:
 
   # DEMIS Configuration Files - The image is terminated immediately, it serves as data container
-
   demis-config-data:
-    image: gematik1/demis-configuration-test:1.7.4
+    image: gematik1/demis-configuration-test:1.7.6
+    container_name: demis-config-data
     restart: "no"
     <<: *volume-setup-ref
-    networks:
-      demis-network:
-
+    
+  # DEMIS FHIR Profiles Data - The image is terminated immediately, it serves as data container
+  demis-profile-data:
+    image: gematik1/demis-fhir-profile-snapshots:1.0.0
+    container_name: demis-profile-data
+    restart: "no"
+    <<: *volume-profiles-ref
+  
   keycloak:
-    image: gematik1/demis-keycloak:3.3.0
+    image: gematik1/demis-keycloak:4.0.0
     <<: *volume-setup-ref
     ports:
       - "9081:8080"
@@ -104,12 +114,12 @@ services:
         condition: service_completed_successfully
     healthcheck:
       <<: *healthcheck-ref
-      test: [ "CMD-SHELL", "curl --fail http://localhost:8080/health || exit 1" ]
+      test: [ "CMD-SHELL", "/usr/bin/wget --no-verbose --tries=1 --spider http://localhost:8080/health" ]
     networks:
       demis-network:
 
   keycloak-importer:
-    image: gematik1/demis-keycloak:3.3.0
+    image: gematik1/demis-keycloak:4.0.0
     entrypoint: [ "/docker-entrypoint.d/kc-import-data.sh" ]
     <<: *volume-setup-ref
     container_name: keycloak-importer
@@ -148,8 +158,7 @@ services:
 
   nginx:
     image: gematik1/demis-nginx:1.8.6
-    <<: *service-setup-ref
-    <<: *volume-setup-ref
+    <<: [*service-setup-ref ,*volume-setup-ref]
     ports:
       - "7443:443"
     container_name: demis-nginx
@@ -212,8 +221,7 @@ services:
 
   pdf-generation-service:
     image: gematik1/demis-pdf-generation:1.11.0
-    <<: *service-setup-ref
-    <<: *volume-setup-ref
+    <<: [*service-setup-ref,*volume-setup-ref]
     ports:
       - "9074:8080"
     container_name: demis-pdf-generation-service
@@ -224,37 +232,74 @@ services:
       demis-config-data:
         condition: service_completed_successfully
     environment:
-      <<: *environment-config-ref
-      <<: *environment-timezone-ref
+      <<: [*environment-config-ref, *environment-timezone-ref]
 
   notification-clearing-api:
-    image: gematik1/demis-notification-clearing-api:1.16.1
+    image: gematik1/demis-notification-clearing-api:1.16.2
     <<: *volume-setup-ref
     ports:
       - "9070:8080"
     container_name: demis-notification-clearing-api
     environment:
       <<: *environment-timezone-ref
-      HAPI_OIDC_ISSUER : https://localhost:7443/auth/realms/OEGD
-      HAPI_SERVER_ADDRESS : https://localhost:7443/notification-clearing-api/fhir/
+      HAPI_CORS_ALLOW_ORIGIN: "*"
+      HAPI_NOTIFICATION_API_IP: "*"
+      HAPI_SERVER_ADDRESS: "https://localhost:7443/notification-clearing-api/fhir/"
+      # Deletion / Expunge Job
+      HAPI_DELETION_SERVICER_ADDRESS_LOCALHOST: "http://demis-notification-clearing-api:8080/notification-clearing-api/fhir/"
+      HAPI_DELETION_FREQUENCY_AS_CRON: "0 0 22 * * ? *"
+      HAPI_EXPUNGE_FREQUENCY_AS_CRON: "0 15 * * * ? *"
+      # Keycloak
+      HAPI_OIDC_AUDIENCE: "notification-clearing-api"
+      HAPI_OIDC_ISSUER: "https://localhost:7443/auth/realms/OEGD"
+      HAPI_OIDC_KEYSOURCE: "http://demis-keycloak:8080/realms/OEGD/protocol/openid-connect/certs"
+      HAPI_OIDC_USERINFOENDPOINT: "http://demis-keycloak:8080/realms/OEGD/protocol/openid-connect/userinfo"
+      # Database
+      HAPI_DATASOURCE_DRIVER: "org.postgresql.Driver"
+      HAPI_HIBERNATE_DIALECT: "org.hibernate.dialect.PostgreSQL94Dialect"
+      HAPI_DATASOURCE_URL: "jdbc:postgresql://demis-postgres:5432/notification"
+      HAPI_DATASOURCE_USERNAME: "notification"
+      HAPI_DATASOURCE_PASSWORD: "HEAbryTazZ6mcu2G5V2d"
+      # Log Level
+      HAPI_ROOT_LOG_LEVEL: "DEBUG"
     depends_on:
       demis-postgres:
-        condition: service_started
+        condition: service_healthy
       demis-config-data:
         condition: service_completed_successfully
     networks:
       demis-network:
 
   notification-entry-service:
-    image: gematik1/demis-notification-entry-service:1.1.3
-    <<: *volume-setup-ref
+    image: gematik1/demis-notification-entry-service:1.1.4
     ports:
       - "9080:8080"
     container_name: demis-notification-entry-service
     environment:
       <<: *environment-timezone-ref
-      HAPI_OIDC_ISSUER : https://localhost:7443/auth/realms/LAB,https://localhost:7443/auth/realms/HOSPITAL
-      HAPI_SERVER_ADDRESS : https://localhost:7443/notification-entry-service/fhir/
+      HAPI_SERVER_ADDRESS : "https://localhost:7443/notification-entry-service/fhir/"
+      HAPI_CORS_ALLOW_ORIGIN: "*"
+      # Profiles Configuration
+      HAPI_SCHEMAS_LOCATION_DV2: "/app/data/profiles/Fhir"
+      HAPI_SCHEMAS_DISEASE_MAPPING: "/app/data/profiles/CodeMapping/ProfileResources/ConceptMap/NotificationDiseaseCategoryToSurvNetCode.xml"
+      HAPI_SCHEMAS_LABORATORY_MAPPING: "/app/data/profiles/CodeMapping/ProfileResources/ConceptMap/NotificationCategoryToSurvNetCode.xml"
+      # Keycloak
+      HAPI_OIDC_ISSUER: "https://localhost:7443/auth/realms/LAB,https://localhost:7443/auth/realms/HOSPITAL"
+      HAPI_OIDC_KEYSOURCE: "http://demis-keycloak:8080/realms/LAB/protocol/openid-connect/certs,http://demis-keycloak:8080/realms/HOSPITAL/protocol/openid-connect/certs"
+      HAPI_OIDC_USERINFOENDPOINT: "http://demis-keycloak:8080/realms/LAB/protocol/openid-connect/userinfo"
+      # Pseudonymization Service
+      HAPI_KMS_ENDPOINT: "https://demis-pseudonymization-service:7663/v1/kms/keyinfo"
+      HAPI_PS_ENDPOINT: "http://demis-pseudonymization-service:7663/demis/pseudonymization"
+      HAPI_PS_APIKEY: 549407ec5dc6ed71149a5888c173c96003fff40a0acf864d7595faa3ffd8aa3b
+      # Pseudonymization Storage Service
+      HAPI_PSS_ENDPOINT: "http://demis-storage-service:7771/demis/storage"
+      HAPI_PSS_APIKEY: 505f45bf1319fdd83463e6ce246f6e9c5cda34c6799ad2d838c94fe35e8b5abd
+      # Notification Clearing Api
+      HAPI_NCS_ENDPOINT: "http://demis-notification-clearing-api:8080/notification-clearing-api/fhir/"
+      HAPI_NCS_APIKEY: aad3f9f00390689324a7f49c4e908fcf981dfa0563b857196e7ececf5f1eb0ea
+      # PDF Generation Service
+      HAPI_PGS_ENDPOINT: "http://demis-pdf-generation-service:8080/pdfgenerator/v1/generate"
+      HAPI_PGS_APIKEY: b052fc7ecd919c16a343ba743aa66bdaa720fdb8de45642cffb1b3981bb2fc54
     depends_on:
       pseudonymization-service:
         condition: service_started
@@ -264,18 +309,28 @@ services:
         condition: service_started
       demis-config-data:
         condition: service_completed_successfully
+      demis-profile-data:
+        condition: service_completed_successfully
     restart: 'no'
     networks:
       demis-network:
+    volumes:
+      - demis-config-volume:/app/config:rw
+      - demis-profiles-volume:/app/data/profiles:ro
 
   validation-service:
-    image: gematik1/demis-validation-service:1.4.0
+    image: gematik1/demis-validation-service:1.4.2
+    <<: *volume-profiles-ref
     ports:
       - "8092:8080"
     container_name: demis-validation-service
     environment:
       TZ: Europe/Berlin
       SERVER_PORT: 8080
+      FHIR_PROFILES_PATH: /app/data/profiles/Fhir
+    depends_on:
+      demis-profile-data:
+        condition: service_completed_successfully
     restart: 'no'
     healthcheck:
       <<: *healthcheck-ref
@@ -284,7 +339,7 @@ services:
       demis-network:
 
   hospital-location-service:
-    image: gematik1/demis-hospital-location-service:1.0.10
+    image: gematik1/demis-hospital-location-service:1.0.12
     <<: *service-setup-ref
     ports:
       - "8091:8080"
@@ -300,7 +355,7 @@ services:
       demis-network:
 
   report-processing-service:
-    image: gematik1/demis-report-processing-service:1.3.2
+    image: gematik1/demis-report-processing-service:1.3.4
     ports:
       - "8090:8090"
     container_name: demis-report-processing-service
@@ -325,13 +380,14 @@ services:
       demis-network:
 
   pdfgen-service:
-    image: gematik1/demis-pdfgen-service:1.1.1
+    image: gematik1/demis-pdfgen-service:2.0.0
     ports:
       - "8093:8080"
     container_name: demis-pdfgen-service
     environment:
       TZ: Europe/Berlin
       SERVER_PORT: 8080
+      DEMIS_NETWORK_FHIR_UI_DATA_MODEL_TRANSLATION_SERVICE_ADDRESS: http://demis-fhir-ui-data-model-translation-service:8080
     restart: 'no'
     healthcheck:
       <<: *healthcheck-ref
@@ -339,6 +395,24 @@ services:
     networks:
       demis-network:
 
+  fhir-ui-data-model-translation-service:
+    image: gematik1/demis-fhir-ui-data-model-translation-service:1.0.0
+    <<: *volume-profiles-ref
+    ports:
+      - "8094:8080"
+    container_name: demis-fhir-ui-data-model-translation-service
+    environment:
+      TZ: Europe/Berlin
+      SERVER_PORT: 8080
+      DATA_PATH_PROFILE_ROOT: /app/data/profiles/Fhir
+      DATA_PATH_LOINC_CSV: /app/data/profiles/Loinc.csv
+    restart: 'no'
+    networks:
+      demis-network:
+    depends_on:
+      demis-profile-data:
+        condition: service_completed_successfully
+  
 
 # Network definition
 networks:
@@ -350,3 +424,4 @@ networks:
 # Volume definition
 volumes:
   demis-config-volume:
+  demis-profiles-volume:
