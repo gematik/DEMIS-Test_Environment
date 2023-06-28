@@ -1,7 +1,20 @@
 <img align="right" width="200" height="37" src="image/Gematik_Logo_Flag.png"/> <br/>
 
-# Release notes DEMIS-Testumgebung
+# Release notes DEMIS-Test-Environment
 
+### Release 2.1.0 (2023-06-28)
+- Added latest RKI Profiles 1.23.0.alpha3
+- Removed DV1 Profiles
+- Added QR Code in the PDF Receipt
+- Update of Services
+- Updated Postman Collection for the Docker Test Environment
+- Updated License
+
+### Release 2.0.2 (2023-04-25)
+- Quality enhancements
+- Deprecation of DV1 Profiles
+- InEK got updated
+ 
 ### Release 2.0.1 (2023-03-10)
 - demis-configuration
   - update

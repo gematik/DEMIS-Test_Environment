@@ -1,31 +1,76 @@
-# DEMIS Docker TEST Umgebung
+<img align="right" width="250" height="47" src="image/Gematik_Logo_Flag.png"/> <br/> 
 
-Die vollständige Anleitung finden Sie auf der DEMIS Wissensdatenbank:
+<details>
+  <summary>Table of Contents</summary>
+  <ol>
+    <li>
+      <a href="#about-the-project">About The Project</a>
+       <ul>
+        <li><a href="#documentation">Documentation</a></li>
+        <li><a href="#release-notes">Release Notes</a></li>
+      </ul>
+	</li>
+    <li><a href="#getting-started">Getting Started</a></li>
+    <li><a href="#fhir-interfaces">FHIR-Interfaces</a></li>
+    <li><a href="#contributing">Contributing</a></li>
+    <li><a href="#license">License</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ol>
+</details>
+
+# DEMIS Docker TEST Environment
+
+## About The Project
+
+This is a Docker-based Test environment for the Deutschen Elektronischen Melde- und Informationssystem für den Infektionsschutz (DEMIS).
+
+### Documentation
+
+The complete Documentation can be found in the DEMIS Knownledge Base (in German):
 
 [Informationen zur DEMIS Docker Testumgebung](https://wiki.gematik.de/display/DSKB/Informationen+zur+DEMIS+Docker+Testumgebung)
 
+### Release Notes
+
+See [ReleaseNotes.md](./ReleaseNotes.md) for all information regarding the (newest) releases.
 ______________________________________________________________________________________
 
-## Kurzanleitung
+## Getting Started
 
-- Docker installieren (s. [Installation DEMIS Testumgebung in Docker für Windows10](https://wiki.gematik.de/pages/viewpage.action?pageId=422118286))
+- Install Docker (s. [Installation DEMIS Testumgebung in Docker für Windows10](https://wiki.gematik.de/pages/viewpage.action?pageId=422118286))
 
-- Starten der Umgebung mit: `docker-compose --file .\demis.yml up --detach`
+- Start the environment: `docker compose --project-name demis --file .\demis.yml up --detach`
 
-- [DEMIS-Adapter Download](https://nexus.prod.ccs.gematik.solutions/repository/DEMIS/adapter/DEMIS-Adapter-2.0.1.zip)
+- Download the [DEMIS-Adapter](https://nexus.prod.ccs.gematik.solutions/repository/DEMIS/adapter/DEMIS-Adapter-2.0.1.zip)
 
-- [DEMIS-Importer Download](https://nexus.prod.ccs.gematik.solutions/repository/DEMIS/importer/DEMIS-Importer.zip)
+- Download the [DEMIS-Importer](https://nexus.prod.ccs.gematik.solutions/repository/DEMIS/importer/DEMIS-Importer.zip)
 
-- Meldung mit DEMIS-Adapter senden
+- Send Messages with the DEMIS-Adapter
 
-- Meldung mit DEMIS-Importer abholen
+- Receive Messages with DEMIS-Importer
 
-- Beenden der Umgebung mit: `docker-compose --file .\demis.yml down -v`
+- Stop the environment: `docker compose --project-name demis --file .\demis.yml down -v`
 
 ______________________________________________________________________________________
 
-## FHIR-Schnittstelle
+## FHIR-Interfaces
 
 - Postman Collection: FHIR-Schnittstelle/DDTU_postman_collection.json
 
-- [Dokumentation zur Postman Collection](https://wiki.gematik.de/display/DSKB/Informationen+zur+DEMIS+Docker+Testumgebung#InformationenzurDEMISDockerTestumgebung-FHIRSchnittstelle-Postman-Collection)
+- [Documentation for the Postman Collection (German)](https://wiki.gematik.de/display/DSKB/Informationen+zur+DEMIS+Docker+Testumgebung#InformationenzurDEMISDockerTestumgebung-FHIRSchnittstelle-Postman-Collection)
+
+## Contributing
+
+If you want to contribute, please check our [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+## License
+
+EUROPEAN UNION PUBLIC LICENCE v. 1.2
+
+EUPL © the European Union 2007, 2016
+
+See [LICENSE](./LICENSE).
+
+## Contact
+
+E-Mail to [DEMIS Entwicklung](mailto:demis-entwicklung@gematik.de?subject=[GitHub]%20DDTU)
