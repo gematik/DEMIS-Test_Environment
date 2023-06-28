@@ -75,7 +75,7 @@ services:
     <<: *volume-profiles-ref
 
   keycloak:
-    image: gematik1/demis-keycloak:4.1.1
+    image: gematik1/demis-keycloak:4.1.1-nginx
     <<: *volume-setup-ref
     ports:
       - "9081:8080"
@@ -380,7 +380,7 @@ services:
       demis-network:
 
   fhir-ui-data-model-translation-service:
-    image: gematik1/demis-fhir-ui-data-model-translation-service:1.0.0
+    image: gematik1/demis-fhir-ui-data-model-translation-service:1.1.0
     <<: *volume-profiles-ref
     ports:
       - "8094:8080"
