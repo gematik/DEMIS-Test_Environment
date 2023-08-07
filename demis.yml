@@ -66,10 +66,10 @@ services:
     container_name: demis-config-data
     restart: "no"
     <<: *volume-setup-ref
-    
+
   # DEMIS FHIR Profiles Data - The image is terminated immediately, it serves as data container
   demis-profile-data:
-    image: gematik1/demis-fhir-profile-snapshots:2.0.0
+    image: gematik1/demis-fhir-profile-snapshots:2.1.0
     container_name: demis-profile-data
     restart: "no"
     <<: *volume-profiles-ref
@@ -252,7 +252,7 @@ services:
       demis-network:
 
   notification-entry-service:
-    image: gematik1/demis-notification-entry-service:2.0.0
+    image: gematik1/demis-notification-entry-service:2.0.1
     ports:
       - "9080:8080"
     container_name: demis-notification-entry-service
@@ -323,7 +323,7 @@ services:
       demis-network:
 
   hospital-location-service:
-    image: gematik1/demis-hospital-location-service:1.0.13
+    image: gematik1/demis-hospital-location-service:1.0.14
     <<: *service-setup-ref
     ports:
       - "8091:8080"
@@ -364,7 +364,7 @@ services:
       demis-network:
 
   pdfgen-service:
-    image: gematik1/demis-pdfgen-service:2.0.0
+    image: gematik1/demis-pdfgen-service:2.1.1
     ports:
       - "8093:8080"
     container_name: demis-pdfgen-service
@@ -380,7 +380,7 @@ services:
       demis-network:
 
   fhir-ui-data-model-translation-service:
-    image: gematik1/demis-fhir-ui-data-model-translation-service:1.1.0
+    image: gematik1/demis-fhir-ui-data-model-translation-service:1.1.1
     <<: *volume-profiles-ref
     ports:
       - "8094:8080"
@@ -396,7 +396,7 @@ services:
     depends_on:
       demis-profile-data:
         condition: service_completed_successfully
-  
+
 
 # Network definition
 networks:
