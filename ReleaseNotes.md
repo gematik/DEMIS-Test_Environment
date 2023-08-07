@@ -2,6 +2,9 @@
 
 # Release notes DEMIS-Test-Environment
 
+### Release 2.2.0 (2023-08-07)
+- Added latest RKI Profiles for rki.demis.r4.core-1.23.1-rc1
+
 ### Release 2.1.0 (2023-06-28)
 - Added latest RKI Profiles 1.23.0.alpha3
 - Removed DV1 Profiles
