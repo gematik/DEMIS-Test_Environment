@@ -39,7 +39,7 @@ ________________________________________________________________________________
 
 - Install Docker (s. [Installation DEMIS Testumgebung in Docker für Windows10](https://wiki.gematik.de/pages/viewpage.action?pageId=422118286))
 
-- Start the environment: `docker compose --project-name demis --file .\demis.yml up --detach`
+- Start the environment: `docker compose --project-name demis --file demis.yml up --detach`
 
 - Download the [DEMIS-Adapter](https://nexus.prod.ccs.gematik.solutions/repository/DEMIS/adapter/DEMIS-Adapter-2.0.1.zip)
 
@@ -49,7 +49,7 @@ ________________________________________________________________________________
 
 - Receive Messages with DEMIS-Importer
 
-- Stop the environment: `docker compose --project-name demis --file .\demis.yml down -v`
+- Stop the environment: `docker compose --project-name demis --file demis.yml down -v`
 
 ______________________________________________________________________________________
 
