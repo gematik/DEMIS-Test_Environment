@@ -1,5 +1,27 @@
 <img align="right" width="250" height="47" src="image/Gematik_Logo_Flag.png"/> <br/> 
+<div align="center" style="border: 1px solid #dee2e6; padding: 20px; background-color: #3d98ef;">
+    <h1 style="color: #ff001b;">Project Status</h1>
+    <p style="color: #000000;">This project is no longer being developed.</p>
+    <p style="color: #000000;">A new project will be available in the future!</p>
+</div>
 
+<details>
+  <summary>Table of Contents</summary>
+  <ol>
+    <li>
+      <a href="#about-the-project">About The Project</a>
+       <ul>
+        <li><a href="#documentation">Documentation</a></li>
+        <li><a href="#release-notes">Release Notes</a></li>
+      </ul>
+	</li>
+    <li><a href="#getting-started">Getting Started</a></li>
+    <li><a href="#fhir-interfaces">FHIR-Interfaces</a></li>
+    <li><a href="#contributing">Contributing</a></li>
+    <li><a href="#license">License</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ol>
+</details>
 <details>
   <summary>Table of Contents</summary>
   <ol>
