@@ -2,7 +2,8 @@
 <div align="center" style="border: 1px solid #dee2e6; padding: 20px; background-color: #3d98ef;">
     <h1 style="color: #ff001b;">Project Status</h1>
     <p style="color: #000000;">This project is no longer being developed.</p>
-    <p style="color: #000000;">A new project will be available in the future!</p>
+    <p style="color: #000000;">A new project is available: <a href="https://github.com/gematik/DEMIS-Development-Cluster"> DEMIS-Development-Cluster</a></p>
+    <p style="color: #000000;">Please visit Wissensdatenbank: <a href="https://wiki.gematik.de/x/JQC7CQ"> Informationen zur DEMIS-Testumgebung</a></p>
 </div>
 
 <details>
